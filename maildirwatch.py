@@ -33,7 +33,7 @@ clicks on the notification.  By default, no actions are defined.  Actions can
 be defined in the configuration file.
 
 Configuration
-~~~~~~~~~~~~~
+=============
 
 The program looks for the configuration file in
 ``$XDG_CONFIG_HOME/maildirwatch.conf`` or ``~/.config/maildirwatch.conf`` if
