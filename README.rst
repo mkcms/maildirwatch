@@ -28,6 +28,10 @@ Installation from PyPI_::
 
 Python3 is required.
 
+**Note**: PyGObject_ is a dependency of this program.  To successfully install it,
+you might have to install GObject development libraries on your system.  On
+Debian, the package ``libgirepository1.0-dev`` might have to be installed.
+
 Usage
 =====
 
@@ -114,6 +118,7 @@ License
 
 .. _Maildirs: https://cr.yp.to/proto/maildir.html
 .. _PyPI: https://pypi.org/
+.. _PyGObject: https://pypi.org/project/PyGObject/
 ..
 
    Local Variables:
