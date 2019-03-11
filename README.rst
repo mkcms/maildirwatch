@@ -16,6 +16,26 @@ The displayed notification is interactive - actions can be performed when user
 clicks on the notification.  By default, no actions are defined.  Actions can
 be defined in the configuration file.
 
+Installation
+============
+
+Installation from PyPI_::
+
+  pip3 install --user maildirwatch
+
+Python3 is required.
+
+Usage
+=====
+
+Use the ``maildirwatch`` command to start the program, or::
+
+  python3 -m maildirwatch
+
+To list available options, run::
+
+  maildirwatch --help
+
 Configuration
 =============
 
@@ -90,6 +110,7 @@ License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 .. _Maildirs: https://cr.yp.to/proto/maildir.html
+.. _PyPI: https://pypi.org/
 ..
 
    Local Variables:
