@@ -1,3 +1,6 @@
+.. image:: https://badge.fury.io/py/maildirwatch.svg
+    :target: https://badge.fury.io/py/maildirwatch
+
 =====================================================================
  maildirwatch - Watch Maildir for new mail and display notifications
 =====================================================================
