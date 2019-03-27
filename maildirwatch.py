@@ -51,6 +51,11 @@ These options should be put in the ``[global]`` section.
 
   The directory to scan for maildirs.  Default value: ``~/Maildir``.
 
+* ``ignore``
+
+  Comma-separated list of maildir patterns to ignore.  Each pattern must be in
+  fnmatch_ style.  By default, no maildirs are ignored.
+
 Actions
 -------
 
@@ -73,11 +78,12 @@ any other action.
 Example configuration
 ---------------------
 
-Here is an example configuration file that modifies path to the Maildir and
-defines two actions::
+Here is an example configuration file that modifies path to the Maildir,
+ignores spam folder and defines two actions::
 
   [global]
   maildir = ~/mail
+  ignore = *Spam,*foo/bar*
 
   [actions]
   default = Show mu4e
@@ -97,6 +103,8 @@ import logging
 import os
 import signal
 import sys
+from fnmatch import fnmatch
+from functools import partial
 
 if True:  # pylint: disable=using-constant-test
     # Keep this in an if block to keep isort from touching these lines.  isort
@@ -111,6 +119,7 @@ if True:  # pylint: disable=using-constant-test
 config = configparser.ConfigParser()
 config.add_section('global')
 config.add_section('actions')
+config['global']['ignore'] = ''
 config['global']['maildir'] = '~/Maildir'
 
 logger = logging.getLogger(__name__)
@@ -152,6 +161,14 @@ def iter_maildirs(directory):
             yield from iter_maildirs(subdirpath)
 
 
+def maildir_is_ignored(directory):
+    """Check if `directory` is ignored in the config."""
+    return any(
+        map(
+            partial(fnmatch, directory),
+            config['global']['ignore'].split(',')))
+
+
 def invoke_action(_notification, name):
     """Invoke action with `name`."""
     if name == 'default':
@@ -188,6 +205,9 @@ class App:
 
         directory = os.path.expanduser(config['global']['maildir'])
         for maildir in iter_maildirs(directory):
+            if maildir_is_ignored(maildir):
+                logger.info('Ignoring maildir %s', maildir)
+                continue
             new_msg_dir = os.path.join(maildir, 'new')
             gfile = Gio.File.new_for_path(new_msg_dir)
             monitor = gfile.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES)

@@ -62,6 +62,11 @@ These options should be put in the ``[global]`` section.
 
   The directory to scan for maildirs.  Default value: ``~/Maildir``.
 
+* ``ignore``
+
+  Comma-separated list of maildir patterns to ignore.  Each pattern must be in
+  fnmatch_ style.  By default, no maildirs are ignored.
+
 Actions
 -------
 
@@ -84,11 +89,12 @@ any other action.
 Example configuration
 ---------------------
 
-Here is an example configuration file that modifies path to the Maildir and
-defines two actions::
+Here is an example configuration file that modifies path to the Maildir,
+ignores spam folder and defines two actions::
 
   [global]
   maildir = ~/mail
+  ignore = *Spam,*foo/bar*
 
   [actions]
   default = Show mu4e
@@ -119,6 +125,7 @@ License
 .. _Maildirs: https://cr.yp.to/proto/maildir.html
 .. _PyPI: https://pypi.org/
 .. _PyGObject: https://pypi.org/project/PyGObject/
+.. _fnmatch: https://docs.python.org/3/library/fnmatch.html
 ..
 
    Local Variables:
