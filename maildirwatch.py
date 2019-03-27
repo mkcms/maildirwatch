@@ -92,7 +92,7 @@ ignores spam folder and defines two actions::
 
 """
 
-__version__ = '0.0.0'
+__version__ = '0.1.0'
 
 import argparse
 import configparser

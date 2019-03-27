@@ -1,3 +1,10 @@
+2019-03-27  Michał Krzywkowski  <k.michal@zoho.com>
+
+	Version 0.1.0
+
+	Added the `ignore' configuration option, which makes it possible
+	to specify maildirs which should not be watched.
+
 2019-03-11  Michał Krzywkowski  <k.michal@zoho.com>
 
 	Version 0.0.0

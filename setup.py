@@ -6,7 +6,7 @@ from setuptools import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-version = '0.0.0'
+version = '0.1.0'
 
 with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
