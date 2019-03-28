@@ -123,8 +123,6 @@ config['global']['ignore'] = ''
 config['global']['maildir'] = '~/Maildir'
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
 
 def hash_message(message):
@@ -291,6 +289,9 @@ class App:
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+
     argv = Gtk.init(sys.argv)
 
     config_path = os.path.join(
