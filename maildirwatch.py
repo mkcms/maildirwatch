@@ -104,6 +104,7 @@ import configparser
 import email
 import email.policy
 import hashlib
+import html
 import logging
 import os
 import signal
@@ -272,6 +273,11 @@ class App:
             logger.info('From %s, Subject: %s', sender, subject)
 
             if 'body-markup' in server_capabilities:
+                # Escape the notification body - needed for xfce4-notifyd which
+                # fails to render body markup, because it thinks that
+                # <email@email> is a tag.
+                subject = html.escape(subject)
+                sender = html.escape(sender)
                 subject = '<b>{}</b>'.format(subject)
                 sender = '<i>{}</i>'.format(sender)
             body += '{} from {}'.format(subject, sender)
