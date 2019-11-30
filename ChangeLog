@@ -1,3 +1,11 @@
+2019-11-30  Michał Krzywkowski  <k.michal@zoho.com>
+
+	Version 0.1.1
+
+	* maildirwatch.py (App._show_notification): Escape notification
+	body when using HTML.  xfce4-notifyd thinks that <person@email> is
+	a tag, so it fails to render the body markup.
+
 2019-03-27  Michał Krzywkowski  <k.michal@zoho.com>
 
 	Version 0.1.0
