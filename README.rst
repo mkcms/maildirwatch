@@ -22,7 +22,8 @@ Python3 is required.
 
 **Note**: PyGObject_ is a dependency of this program.  To install it, you might
 have to install GObject development libraries on your system.  On Debian, the
-package ``libgirepository1.0-dev`` provides these libraries.
+packages ``libgirepository1.0-dev`` and ``gir1.2-notify-0.7`` provide these
+libraries.
 
 Usage
 =====
