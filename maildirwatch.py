@@ -168,8 +168,7 @@ def iter_maildirs(directory):
 def maildir_is_ignored(directory):
     """Check if `directory` is ignored in the config."""
     return any(
-        map(
-            partial(fnmatch, directory),
+        map(partial(fnmatch, directory),
             config['global']['ignore'].split(',')))
 
 
@@ -186,11 +185,72 @@ def invoke_action(_notification, name):
     GLib.spawn_command_line_async(command)
 
 
+class GNotifier:
+    def __init__(self):
+        self._notifications = []
+
+    def _show_notification(self, messages):
+        summary = '{} new mail {} received'.format(
+            len(messages), 'messages' if len(messages) != 1 else 'message')
+        body = ''
+        server_capabilities = Notify.get_server_caps()
+
+        for message in messages:
+            if body:
+                body += '\n--\n'
+
+            subject = message['Subject']
+            sender = message['From']
+
+            logger.info('From %s, Subject: %s', sender, subject)
+
+            if 'body-markup' in server_capabilities:
+                # Escape the notification body - needed for xfce4-notifyd which
+                # fails to render body markup, because it thinks that
+                # <email@email> is a tag.
+                subject = html.escape(subject)
+                sender = html.escape(sender)
+                subject = '<b>{}</b>'.format(subject)
+                sender = '<i>{}</i>'.format(sender)
+            body += '{} from {}'.format(subject, sender)
+
+        notification = Notify.Notification.new(summary=summary,
+                                               body=body,
+                                               icon='mail-unread')
+
+        if 'actions' in server_capabilities:
+            for action in config['actions']:
+                notification.add_action(action, action, invoke_action)
+
+        notification.connect('closed', self._on_notification_closed)
+        self._notifications.append(notification)
+
+        notification.show()
+
+    def _on_notification_closed(self, notification):
+        logger.debug('Notification %s closed', notification.props.id)
+        self._notifications.remove(notification)
+
+    def notify(self, messages):
+        self._show_notification(messages)
+
+    def unsubscribe(self):
+        pass
+
+
+class LogNotifier:
+    def notify(self, messages):
+        logger.info('Received %d new messages', len(messages))
+
+    def unsubscribe(self):
+        pass
+
+
 class App:
     def __init__(self):
         self._queue = []
-        self._notifications = []
         self._monitors = []
+        self._notifiers = [LogNotifier(), GNotifier()]
         self._timer = None
 
     def stop(self):
@@ -198,6 +258,9 @@ class App:
         for monitor in self._monitors:
             monitor.cancel()
         self._monitors.clear()
+
+        for notifier in self._notifiers:
+            notifier.unsubscribe()
 
         if self._timer is not None:
             GLib.source_remove(self._timer)
@@ -230,16 +293,18 @@ class App:
 
         try:
             with open(path) as inputfile:
-                message = email.message_from_file(
-                    inputfile, policy=email.policy.SMTP)
+                message = email.message_from_file(inputfile,
+                                                  policy=email.policy.SMTP)
                 self._queue.append(message)
         except FileNotFoundError:
             logger.error('Message file not found: %s', path)
             return
+        self._handle_messages()
 
-        if self._timer is not None:
-            GLib.source_remove(self._timer)
-        self._timer = GLib.timeout_add_seconds(60.0, self._handle_messages)
+    def _notify(self, messages):
+        for notifier in self._notifiers:
+            notifier.notify(messages)
+        self._queue.clear()
 
     def _handle_messages(self):
         logger.debug('dequeuing; queue size=%d', len(self._queue))
@@ -248,56 +313,10 @@ class App:
 
         # Remove duplicate messages.
         messages = {hash_message(m): m for m in self._queue}.values()
-        self._queue.clear()
 
-        logger.info('Received %d new messages', len(messages))
-        self._show_notification(messages)
-
-        # Return False to stop the timer.
-        self._timer = None
-        return False
-
-    def _show_notification(self, messages):
-        summary = '{} new mail {} received'.format(
-            len(messages), 'messages' if len(messages) != 1 else 'message')
-        body = ''
-        server_capabilities = Notify.get_server_caps()
-
-        for message in messages:
-            if body:
-                body += '\n--\n'
-
-            subject = message['Subject']
-            sender = message['From']
-
-            logger.info('From %s, Subject: %s', sender, subject)
-
-            if 'body-markup' in server_capabilities:
-                # Escape the notification body - needed for xfce4-notifyd which
-                # fails to render body markup, because it thinks that
-                # <email@email> is a tag.
-                subject = html.escape(subject)
-                sender = html.escape(sender)
-                subject = '<b>{}</b>'.format(subject)
-                sender = '<i>{}</i>'.format(sender)
-            body += '{} from {}'.format(subject, sender)
-
-        notification = Notify.Notification.new(
-            summary=summary, body=body, icon='mail-unread')
-
-        if 'actions' in server_capabilities:
-            for action in config['actions']:
-                notification.add_action(action, action, invoke_action)
-
-        notification.connect('closed', self._on_notification_closed)
-        self._notifications.append(notification)
-
-        notification.show()
-
-    def _on_notification_closed(self, notification):
-        logger.debug('Notification %s closed', notification.props.id)
-        self._notifications.remove(notification)
-
+        if self._timer is not None:
+            GLib.source_remove(self._timer)
+        self._timer = GLib.timeout_add_seconds(60.0, self._notify, messages)
 
 def main():
     if os.environ.get('INVOCATION_ID', False):
@@ -306,10 +325,9 @@ def main():
         logging.basicConfig(
             level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
+    config_path = os.path.join(os.environ.get('XDG_CONFIG_HOME', '~/.config'),
+                               'maildirwatch.conf')
     argv = Gtk.init(sys.argv)
-
-    config_path = os.path.join(
-        os.environ.get('XDG_CONFIG_HOME', '~/.config'), 'maildirwatch.conf')
 
     epilog = (
         'In addition to these arguments, you can also specify GTK options,\n'
@@ -359,9 +377,8 @@ def main():
                              Gtk.main_quit)
 
         def unhandled_exception_hook(etype, value, traceback):
-            logger.exception(
-                'Unhandled exception, exiting',
-                exc_info=(etype, value, traceback))
+            logger.exception('Unhandled exception, exiting',
+                             exc_info=(etype, value, traceback))
             Gtk.main_quit()
 
             nonlocal success
