@@ -300,8 +300,11 @@ class App:
 
 
 def main():
-    logging.basicConfig(
-        level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+    if os.environ.get('INVOCATION_ID', False):
+        logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+    else:
+        logging.basicConfig(
+            level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
     argv = Gtk.init(sys.argv)
 
