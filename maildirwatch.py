@@ -318,12 +318,14 @@ class App:
             GLib.source_remove(self._timer)
         self._timer = GLib.timeout_add_seconds(60.0, self._notify, messages)
 
+
 def main():
     if os.environ.get('INVOCATION_ID', False):
-        logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+        logging.basicConfig(level=logging.INFO,
+                            format='[%(levelname)s] %(message)s')
     else:
-        logging.basicConfig(
-            level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+        logging.basicConfig(level=logging.INFO,
+                            format='%(asctime)s [%(levelname)s] %(message)s')
 
     config_path = os.path.join(os.environ.get('XDG_CONFIG_HOME', '~/.config'),
                                'maildirwatch.conf')
@@ -343,12 +345,13 @@ def main():
         metavar='PATH',
         help='path to configuration file \n(default {})'.format(config_path),
         default=config_path)
-    parser.add_argument(
-        '-d', '--debug', action='store_true', help='set debug logging level')
-    parser.add_argument(
-        '--version',
-        action='version',
-        version='%(prog)s {}'.format(__version__))
+    parser.add_argument('-d',
+                        '--debug',
+                        action='store_true',
+                        help='set debug logging level')
+    parser.add_argument('--version',
+                        action='version',
+                        version='%(prog)s {}'.format(__version__))
 
     args = parser.parse_args(argv[1:])
 
