@@ -62,6 +62,15 @@ These options should be put in the ``[global]`` section.
   Comma-separated list of maildir patterns to ignore.  Each pattern must be in
   fnmatch_ style.  By default, no maildirs are ignored.
 
+* ``whitelist``
+
+  Comma-separated list of maildir patterns to watch, even if they're matched by
+  ``ignore``.
+
+  You can explicitly select maildirs to watch by setting ``ignore`` to
+  ``**/**`` and ``whitelist`` to patterns that you want to watch,
+  e.g. ``*Inbox*,*Important*``.
+
 * ``inhibit-command``
 
   Command to run to check if notifications should be inhibited.  If the command
