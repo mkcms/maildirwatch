@@ -61,6 +61,14 @@ These options should be put in the ``[global]`` section.
   Comma-separated list of maildir patterns to ignore.  Each pattern must be in
   fnmatch_ style.  By default, no maildirs are ignored.
 
+* ``inhibit-command``
+
+  Command to run to check if notifications should be inhibited.  If the command
+  exits with 0, the notification is NOT displayed and only a message is logged.
+  Otherwise the notification is displayed.
+
+  If this is undefined, notifications are always displayed.
+
 Actions
 -------
 
@@ -84,11 +92,13 @@ Example configuration
 ---------------------
 
 Below is an example configuration file that modifies path to the Maildir,
-ignores spam folder and defines two actions::
+ignores spam folder, defines two actions and disables notifications if VLC is
+running::
 
   [global]
   maildir = ~/mail
   ignore = *Spam,*foo/bar*
+  inhibit-command = pgrep vlc
 
   [actions]
   default = Show mu4e
@@ -172,6 +182,26 @@ def maildir_is_ignored(directory):
             config['global']['ignore'].split(',')))
 
 
+def should_notify():
+    """
+    Return true if notification should be displayed.
+
+    This runs the `inhibit-command` defined in the config and checks its exit
+    status.
+
+    """
+    command = config['global'].get('inhibit-command')
+    if not command:
+        return True
+
+    logger.debug('Checking if notification should be displayed command=%r',
+                 command)
+    result = GLib.spawn_command_line_sync(command)
+    logger.debug('result=%s', result)
+
+    return result.exit_status != 0
+
+
 def invoke_action(_notification, name):
     """Invoke action with `name`."""
     if name == 'default':
@@ -190,6 +220,9 @@ class GNotifier:
         self._notifications = []
 
     def _show_notification(self, messages):
+        if not should_notify():
+            return
+
         summary = '{} new mail {} received'.format(
             len(messages), 'messages' if len(messages) != 1 else 'message')
         body = ''

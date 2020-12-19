@@ -62,6 +62,14 @@ These options should be put in the ``[global]`` section.
   Comma-separated list of maildir patterns to ignore.  Each pattern must be in
   fnmatch_ style.  By default, no maildirs are ignored.
 
+* ``inhibit-command``
+
+  Command to run to check if notifications should be inhibited.  If the command
+  exits with 0, the notification is NOT displayed and only a message is logged.
+  Otherwise the notification is displayed.
+
+  If this is undefined, notifications are always displayed.
+
 Actions
 -------
 
@@ -85,11 +93,13 @@ Example configuration
 ---------------------
 
 Below is an example configuration file that modifies path to the Maildir,
-ignores spam folder and defines two actions::
+ignores spam folder, defines two actions and disables notifications if VLC is
+running::
 
   [global]
   maildir = ~/mail
   ignore = *Spam,*foo/bar*
+  inhibit-command = pgrep vlc
 
   [actions]
   default = Show mu4e
