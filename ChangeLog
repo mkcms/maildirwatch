@@ -1,3 +1,16 @@
+2020-12-21  Michał Krzywkowski  <mkrzywkow@gmail.com>
+
+	Version 0.2.0
+
+	- New config option `whitelist` allows specifying maildirs which
+	will be watched even if they are matched by the `ignore` option.
+	This makes it possible to explicitly list maildirs to watch.
+	(gh#4)
+
+	- New config option `inhibit-command` allows makes it possible to
+	control when notifications are displayed at runtime, for example
+	when the user disables them systemwide.  (gh#5)
+
 2019-11-30  Michał Krzywkowski  <k.michal@zoho.com>
 
 	Version 0.1.1
