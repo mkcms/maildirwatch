@@ -356,6 +356,7 @@ class App:
         for notifier in self._notifiers:
             notifier.notify(messages)
         self._queue.clear()
+        self._timer = None
 
     def _handle_messages(self):
         logger.debug('dequeuing; queue size=%d', len(self._queue))
