@@ -28,7 +28,7 @@ setup(
     format(version),
     entry_points={'console_scripts': {'maildirwatch = maildirwatch:main'}},
     include_package_data=True,
-    install_requires=['PyGObject'],
+    install_requires=['PyGObject==3.50.0'],
     license='GPLv3',
     long_description=long_description,
     name='maildirwatch',
