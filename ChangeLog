@@ -1,3 +1,11 @@
+2025-09-12  Michał Krzywkowski  <k.michal@zoho.com>
+
+	Version 0.2.1
+
+	- The PyGObject dependency version has been pinned to 3.50.0 to
+	work around some issues when installing it.  Context:
+	https://gitlab.gnome.org/GNOME/pygobject/-/merge_requests/320#note_2487590
+
 2020-12-21  Michał Krzywkowski  <mkrzywkow@gmail.com>
 
 	Version 0.2.0
