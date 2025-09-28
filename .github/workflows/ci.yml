@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 */12 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@master
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          export INSTARGS='--no-install-recommends --no-install-suggests'
+          sudo apt-get update
+
+          # Base dependencies
+          sudo apt-get install $INSTARGS libgirepository1.0-dev gir1.2-notify-0.7 gir1.2-gtk-3.0
+
+          # Pulliing PyGObject from pip may also need libcairo
+          # development libraries for building
+          sudo apt-get install $INSTARGS libcairo2-dev
+
+          # For running GTK apps without an Xserver (GitHub actions)
+          sudo apt-get install $INSTARGS xvfb xauth
+
+      - name: Install the project from source
+        run: |
+          python3 -m venv env
+          . env/bin/activate
+          pip install -e .
+          xvfb-run maildirwatch --version
+          deactivate
+          rm -rf env
+
+      - name: Install the project from pip
+        run: |
+          python3 -m venv env
+          . env/bin/activate
+          pip install maildirwatch
+          xvfb-run maildirwatch --version
+          deactivate
+          rm -rf env
