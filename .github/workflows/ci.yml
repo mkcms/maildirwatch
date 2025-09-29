@@ -43,6 +43,13 @@ jobs:
           # For running GTK apps without an Xserver (GitHub actions)
           sudo apt-get install $INSTARGS xvfb xauth
 
+          # CI dependencies for checking
+          pip install black isort
+
+      - name: Check formatting
+        run: |
+          make checkformat
+
       - name: Install the project from source
         run: |
           python3 -m venv env

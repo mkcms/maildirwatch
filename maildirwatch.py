@@ -116,7 +116,7 @@ running::
 
 """
 
-__version__ = '0.2.1'
+__version__ = "0.2.1"
 
 import argparse
 import configparser
@@ -136,17 +136,18 @@ if True:  # pylint: disable=using-constant-test
     # reorders the statements and puts imports first, but we need the call to
     # `require_version' before importing from gi.repository.
     import gi
-    gi.require_version('Gtk', '3.0')
-    gi.require_version('Gio', '2.0')
-    gi.require_version('Notify', '0.7')
-    from gi.repository import GLib, Gtk, Gio, Notify
+
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("Gio", "2.0")
+    gi.require_version("Notify", "0.7")
+    from gi.repository import Gio, GLib, Gtk, Notify
 
 config = configparser.ConfigParser()
-config.add_section('global')
-config.add_section('actions')
-config['global']['ignore'] = ''
-config['global']['whitelist'] = ''
-config['global']['maildir'] = '~/Maildir'
+config.add_section("global")
+config.add_section("actions")
+config["global"]["ignore"] = ""
+config["global"]["whitelist"] = ""
+config["global"]["maildir"] = "~/Maildir"
 
 logger = logging.getLogger(__name__)
 
@@ -161,20 +162,20 @@ def hash_message(message):
 
     """
     hasher = hashlib.sha1()
-    hasher.update(message.get('Date', '').encode())
-    hasher.update(message.get('From', '').encode())
-    hasher.update(message.get('Message-Id', '').encode())
-    hasher.update(message.get('Subject', '').encode())
-    hasher.update(message.get('To', '').encode())
+    hasher.update(message.get("Date", "").encode())
+    hasher.update(message.get("From", "").encode())
+    hasher.update(message.get("Message-Id", "").encode())
+    hasher.update(message.get("Subject", "").encode())
+    hasher.update(message.get("To", "").encode())
     return hasher.digest()
 
 
 def iter_maildirs(directory):
     """Yield all maildirs in `directory`, recursively."""
     # Check if DIRECTORY is a maildir.
-    newdir = os.path.join(directory, 'new')
-    tmpdir = os.path.join(directory, 'tmp')
-    curdir = os.path.join(directory, 'cur')
+    newdir = os.path.join(directory, "new")
+    tmpdir = os.path.join(directory, "tmp")
+    curdir = os.path.join(directory, "cur")
     if all(map(os.path.exists, (newdir, tmpdir, curdir))):
         yield directory
 
@@ -188,14 +189,14 @@ def iter_maildirs(directory):
 def maildir_is_ignored(directory):
     """Check if `directory` is ignored in the config."""
     is_ignored = any(
-        map(partial(fnmatch, directory),
-            config['global']['ignore'].split(',')))
+        map(partial(fnmatch, directory), config["global"]["ignore"].split(","))
+    )
 
-    whitelist = config['global'].get('whitelist')
+    whitelist = config["global"].get("whitelist")
     if whitelist:
         is_ignored = is_ignored and not any(
-            map(partial(fnmatch, directory),
-                config['global']['whitelist'].split(',')))
+            map(partial(fnmatch, directory), config["global"]["whitelist"].split(","))
+        )
 
     return is_ignored
 
@@ -208,28 +209,26 @@ def should_notify():
     status.
 
     """
-    command = config['global'].get('inhibit-command')
+    command = config["global"].get("inhibit-command")
     if not command:
         return True
 
-    logger.debug('Checking if notification should be displayed command=%r',
-                 command)
+    logger.debug("Checking if notification should be displayed command=%r", command)
     result = GLib.spawn_command_line_sync(command)
-    logger.debug('result=%s', result)
+    logger.debug("result=%s", result)
 
     return result.exit_status != 0
 
 
 def invoke_action(_notification, name):
     """Invoke action with `name`."""
-    if name == 'default':
-        action = config['actions']['default']
-        command = config['actions'][action]
+    if name == "default":
+        action = config["actions"]["default"]
+        command = config["actions"][action]
     else:
-        command = config['actions'][name]
+        command = config["actions"][name]
 
-    logger.info('Action "%s" invoked by user, running command: %s', name,
-                command)
+    logger.info('Action "%s" invoked by user, running command: %s', name, command)
     GLib.spawn_command_line_async(command)
 
 
@@ -241,45 +240,46 @@ class GNotifier:
         if not should_notify():
             return
 
-        summary = '{} new mail {} received'.format(
-            len(messages), 'messages' if len(messages) != 1 else 'message')
-        body = ''
+        summary = "{} new mail {} received".format(
+            len(messages), "messages" if len(messages) != 1 else "message"
+        )
+        body = ""
         server_capabilities = Notify.get_server_caps()
 
         for message in messages:
             if body:
-                body += '\n--\n'
+                body += "\n--\n"
 
-            subject = message['Subject']
-            sender = message['From']
+            subject = message["Subject"]
+            sender = message["From"]
 
-            logger.info('From %s, Subject: %s', sender, subject)
+            logger.info("From %s, Subject: %s", sender, subject)
 
-            if 'body-markup' in server_capabilities:
+            if "body-markup" in server_capabilities:
                 # Escape the notification body - needed for xfce4-notifyd which
                 # fails to render body markup, because it thinks that
                 # <email@email> is a tag.
                 subject = html.escape(subject)
                 sender = html.escape(sender)
-                subject = '<b>{}</b>'.format(subject)
-                sender = '<i>{}</i>'.format(sender)
-            body += '{} from {}'.format(subject, sender)
+                subject = "<b>{}</b>".format(subject)
+                sender = "<i>{}</i>".format(sender)
+            body += "{} from {}".format(subject, sender)
 
-        notification = Notify.Notification.new(summary=summary,
-                                               body=body,
-                                               icon='mail-unread')
+        notification = Notify.Notification.new(
+            summary=summary, body=body, icon="mail-unread"
+        )
 
-        if 'actions' in server_capabilities:
-            for action in config['actions']:
+        if "actions" in server_capabilities:
+            for action in config["actions"]:
                 notification.add_action(action, action, invoke_action)
 
-        notification.connect('closed', self._on_notification_closed)
+        notification.connect("closed", self._on_notification_closed)
         self._notifications.append(notification)
 
         notification.show()
 
     def _on_notification_closed(self, notification):
-        logger.debug('Notification %s closed', notification.props.id)
+        logger.debug("Notification %s closed", notification.props.id)
         self._notifications.remove(notification)
 
     def notify(self, messages):
@@ -291,7 +291,7 @@ class GNotifier:
 
 class LogNotifier:
     def notify(self, messages):
-        logger.info('Received %d new messages', len(messages))
+        logger.info("Received %d new messages", len(messages))
 
     def unsubscribe(self):
         pass
@@ -321,34 +321,35 @@ class App:
         """Find maildirs, start watching them."""
         self.stop()
 
-        directory = os.path.expanduser(config['global']['maildir'])
+        directory = os.path.expanduser(config["global"]["maildir"])
         for maildir in iter_maildirs(directory):
             if maildir_is_ignored(maildir):
-                logger.info('Ignoring maildir %s', maildir)
+                logger.info("Ignoring maildir %s", maildir)
                 continue
-            new_msg_dir = os.path.join(maildir, 'new')
+            new_msg_dir = os.path.join(maildir, "new")
             gfile = Gio.File.new_for_path(new_msg_dir)
             monitor = gfile.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES)
             self._monitors.append(monitor)
-            monitor.connect('changed', self._handle_file_event)
+            monitor.connect("changed", self._handle_file_event)
 
-            logger.info('Watching maildir %s', maildir)
+            logger.info("Watching maildir %s", maildir)
 
     def _handle_file_event(self, _file_monitor, file, _other_file, event_type):
-        if event_type not in (Gio.FileMonitorEvent.CREATED,
-                              Gio.FileMonitorEvent.MOVED_IN):
+        if event_type not in (
+            Gio.FileMonitorEvent.CREATED,
+            Gio.FileMonitorEvent.MOVED_IN,
+        ):
             return
 
         path = file.get_path()
-        logger.debug('Got file event file=%s, type=%s', path, event_type)
+        logger.debug("Got file event file=%s, type=%s", path, event_type)
 
         try:
             with open(path) as inputfile:
-                message = email.message_from_file(inputfile,
-                                                  policy=email.policy.SMTP)
+                message = email.message_from_file(inputfile, policy=email.policy.SMTP)
                 self._queue.append(message)
         except FileNotFoundError:
-            logger.error('Message file not found: %s', path)
+            logger.error("Message file not found: %s", path)
             return
         self._handle_messages()
 
@@ -359,7 +360,7 @@ class App:
         self._timer = None
 
     def _handle_messages(self):
-        logger.debug('dequeuing; queue size=%d', len(self._queue))
+        logger.debug("dequeuing; queue size=%d", len(self._queue))
         if not self._queue:
             return True
 
@@ -372,38 +373,41 @@ class App:
 
 
 def main():
-    if os.environ.get('INVOCATION_ID', False):
-        logging.basicConfig(level=logging.INFO,
-                            format='[%(levelname)s] %(message)s')
+    if os.environ.get("INVOCATION_ID", False):
+        logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
     else:
-        logging.basicConfig(level=logging.INFO,
-                            format='%(asctime)s [%(levelname)s] %(message)s')
+        logging.basicConfig(
+            level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+        )
 
-    config_path = os.path.join(os.environ.get('XDG_CONFIG_HOME', '~/.config'),
-                               'maildirwatch.conf')
+    config_path = os.path.join(
+        os.environ.get("XDG_CONFIG_HOME", "~/.config"), "maildirwatch.conf"
+    )
     argv = Gtk.init(sys.argv)
 
     epilog = (
-        'In addition to these arguments, you can also specify GTK options,\n'
-        'see man page gtk-options(7) for details.')
+        "In addition to these arguments, you can also specify GTK options,\n"
+        "see man page gtk-options(7) for details."
+    )
 
     parser = argparse.ArgumentParser(
         description=__doc__,
         epilog=epilog,
-        formatter_class=argparse.RawTextHelpFormatter)
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     parser.add_argument(
-        '-c',
-        '--config',
-        metavar='PATH',
-        help='path to configuration file \n(default {})'.format(config_path),
-        default=config_path)
-    parser.add_argument('-d',
-                        '--debug',
-                        action='store_true',
-                        help='set debug logging level')
-    parser.add_argument('--version',
-                        action='version',
-                        version='%(prog)s {}'.format(__version__))
+        "-c",
+        "--config",
+        metavar="PATH",
+        help="path to configuration file \n(default {})".format(config_path),
+        default=config_path,
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="set debug logging level"
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s {}".format(__version__)
+    )
 
     args = parser.parse_args(argv[1:])
 
@@ -411,16 +415,15 @@ def main():
         logger.setLevel(logging.DEBUG)
 
     user_config_path = os.path.expanduser(args.config)
-    logger.info('Loading config file %s', user_config_path)
+    logger.info("Loading config file %s", user_config_path)
     config.read(user_config_path)
 
-    if not Notify.init('maildir-watch'):
-        logger.critical('Could not init Notify')
+    if not Notify.init("maildir-watch"):
+        logger.critical("Could not init Notify")
         sys.exit(1)
     else:
-        logger.debug('Notify server info: %s', Notify.get_server_info())
-        logger.debug('Notify server capabilities: %s',
-                     Notify.get_server_caps())
+        logger.debug("Notify server info: %s", Notify.get_server_info())
+        logger.debug("Notify server capabilities: %s", Notify.get_server_caps())
 
     app = App()
     app.start()
@@ -428,12 +431,12 @@ def main():
     success = True
 
     try:
-        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT,
-                             Gtk.main_quit)
+        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, Gtk.main_quit)
 
         def unhandled_exception_hook(etype, value, traceback):
-            logger.exception('Unhandled exception, exiting',
-                             exc_info=(etype, value, traceback))
+            logger.exception(
+                "Unhandled exception, exiting", exc_info=(etype, value, traceback)
+            )
             Gtk.main_quit()
 
             nonlocal success
@@ -444,7 +447,7 @@ def main():
 
         Gtk.main()
     finally:
-        logger.debug('About to exit, cleaning up')
+        logger.debug("About to exit, cleaning up")
         app.stop()
         Notify.uninit()
 
