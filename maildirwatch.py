@@ -139,8 +139,9 @@ if True:  # pylint: disable=using-constant-test
 
     gi.require_version("Gtk", "3.0")
     gi.require_version("Gio", "2.0")
+    gi.require_version("GLibUnix", "2.0")
     gi.require_version("Notify", "0.7")
-    from gi.repository import Gio, GLib, Gtk, Notify
+    from gi.repository import Gio, GLib, GLibUnix, Gtk, Notify
 
 config = configparser.ConfigParser()
 config.add_section("global")
@@ -431,7 +432,7 @@ def main():
     success = True
 
     try:
-        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, Gtk.main_quit)
+        GLibUnix.signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, Gtk.main_quit)
 
         def unhandled_exception_hook(etype, value, traceback):
             logger.exception(
